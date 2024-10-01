@@ -8,7 +8,7 @@ import base64
 
 st.title("Conversión de Texto a Audio")
 
-# Cambiamos la imagen por Caperucita-Roja.jpg
+# Cambiar imagen por Caperucita-Roja.jpg
 image = Image.open('Caperucita-Roja.jpg')
 st.image(image, width=350)
 
@@ -37,45 +37,67 @@ st.markdown(f"¿Quieres escucharlo? Copia el texto a continuación para converti
 text = st.text_area("Ingrese el texto a escuchar.")
 
 # Selección del lenguaje
-tld = 'com'
 option_lang = st.selectbox(
     "Selecciona el lenguaje",
     ("Español", "English")
 )
 
-if option_lang == "Español":
-    lg = 'es'
-if option_lang == "English":
-    lg = 'en'
+lg = 'es' if option_lang == "Español" else 'en'
 
 # Función para convertir texto a audio
-def text_to_speech(text, tld, lg):
+def text_to_speech(text, lg):
     tts = gTTS(text, lang=lg)
     try:
         my_file_name = text[0:20]  # Nombre del archivo con los primeros 20 caracteres del texto
     except:
         my_file_name = "audio"
     tts.save(f"temp/{my_file_name}.mp3")
-    return my_file_name, text
+    return my_file_name
 
-# Botón para convertir el texto a audio
+# Definir la animación con CSS
+def add_custom_css():
+    custom_css = """
+    <style>
+    .spinner {
+        border: 8px solid #f3f3f3;
+        border-radius: 50%;
+        border-top: 8px solid #3498db;
+        width: 60px;
+        height: 60px;
+        -webkit-animation: spin 2s linear infinite; /* Safari */
+        animation: spin 2s linear infinite;
+        margin: auto;
+    }
+
+    @-webkit-keyframes spin {
+        0% { -webkit-transform: rotate(0deg); }
+        100% { -webkit-transform: rotate(360deg); }
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    </style>
+    """
+    st.markdown(custom_css, unsafe_allow_html=True)
+
+# Mostrar la animación al convertir el texto a audio
 if st.button("Convertir a Audio"):
-    result, output_text = text_to_speech(text, 'com', lg)
+    add_custom_css()  # Añadir la animación CSS
+    st.markdown('<div class="spinner"></div>', unsafe_allow_html=True)  # Mostrar la animación
+
+    time.sleep(2)  # Simula el tiempo de procesamiento
+
+    # Convertir el texto a audio
+    result = text_to_speech(text, lg)
     audio_file = open(f"temp/{result}.mp3", "rb")
     audio_bytes = audio_file.read()
     
+    # Mostrar el audio
     st.markdown(f"## Tú audio:")
     st.audio(audio_bytes, format="audio/mp3", start_time=0)
-
-    with open(f"temp/{result}.mp3", "rb") as f:
-        data = f.read()
-
-    def get_binary_file_downloader_html(bin_file, file_label='File'):
-        bin_str = base64.b64encode(data).decode()
-        href = f'<a href="data:application/octet-stream;base64,{bin_str}" download="{os.path.basename(bin_file)}">Download {file_label}</a>'
-        return href
-
-    st.markdown(get_binary_file_downloader_html(f"temp/{result}.mp3", file_label="Audio File"), unsafe_allow_html=True)
 
 # Función para eliminar archivos antiguos
 def remove_files(n):
@@ -90,4 +112,3 @@ def remove_files(n):
 
 # Eliminar archivos después de 7 días
 remove_files(7)
-
